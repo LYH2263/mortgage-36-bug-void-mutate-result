@@ -18,14 +18,14 @@ class MortgageService:
         row = runs.get(self._c, run_id)
         return self._decode(row) if row else None
     def invalidate_run(self, run_id):
-        from app.services.void_side_effects import blank_result
-        if self.get_run(run_id) is None:
+        """作废只影响列表可见性：结果与输入快照原样保留。
+
+        记录不存在或已处于失效态（重复作废）均返回 None，由路由层区分 404/409。
+        """
+        row = runs.invalidate(self._c, run_id)
+        if not row:
             return None
-        runs.invalidate(self._c, run_id)
-        row = self.get_run(run_id)
-        if row:
-            row["result"] = blank_result()
-        return row
+        return self._decode(row)
     def schedule(self, principal, annual_rate, months, loan_id, persist, preview_rows=12, supersedes_id=None):
         if supersedes_id is not None and runs.get(self._c, supersedes_id) is None:
             raise LookupError(f"run {supersedes_id} not found")

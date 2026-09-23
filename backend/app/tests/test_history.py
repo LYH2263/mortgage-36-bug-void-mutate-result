@@ -38,6 +38,14 @@ def test_invalidate_marks_invalid_and_keeps_figures(svc):
     after = _raw(rid)
     # 作废禁止改动结果：result_json 原文不变，月供与利息合计保持原值
     assert after["result_json"] == before["result_json"]
+    # 作废同样禁止改动输入快照
+    assert after["input_json"] == before["input_json"]
+    # 钉选的 method 设置不受作废影响
+    from app.db import connect as _connect
+    c = _connect()
+    methods = c.execute("SELECT value FROM settings WHERE key='method'").fetchall()
+    c.close()
+    assert [r["value"] for r in methods] == ["equal_payment"]
     result = json.loads(after["result_json"])
     assert result["monthly_payment"] == 4490.45
     assert result["total_interest"] == json.loads(before["result_json"])["total_interest"]
