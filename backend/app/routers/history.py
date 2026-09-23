@@ -18,5 +18,5 @@ def invalidate(run_id: int):
     with MortgageService() as s:
         if s.get_run(run_id) is None: raise HTTPException(404, "run not found")
         run = s.invalidate_run(run_id)
-        if run is None: raise HTTPException(404, "run not found")
+        if run is None: raise HTTPException(409, "run already invalid")
         return run

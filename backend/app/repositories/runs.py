@@ -22,13 +22,10 @@ def get(conn, run_id):
     return dict(row) if row else None
 
 def invalidate(conn, run_id):
-    row = get(conn, run_id)
-    if not row:
-        return False
-    blank = {"monthly_payment": 0.0, "total_interest": 0.0, "total_payment": 0.0, "preview": [], "row_count": 0}
-    conn.execute(
-        "UPDATE calc_runs SET status='invalid', invalidated_at=?, result_json=? WHERE id=?",
-        (_now(), json.dumps(blank, ensure_ascii=False), run_id),
+    # 作废只翻转状态：result_json/input_json 原文保留，重复作废不落库。
+    cur = conn.execute(
+        "UPDATE calc_runs SET status='invalid', invalidated_at=? WHERE id=? AND status='valid'",
+        (_now(), run_id),
     )
     conn.commit()
-    return True
+    return cur.rowcount > 0

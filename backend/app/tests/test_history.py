@@ -49,6 +49,16 @@ def test_double_invalidate_fails(svc):
     assert svc.invalidate_run(rid) is None
 
 
+def test_invalidate_keeps_input_snapshot_and_pinned_method(svc):
+    rid = _persist(svc)
+    before = _raw(rid)
+    svc.invalidate_run(rid)
+    after = _raw(rid)
+    # 作废不得清掉输入快照或钉选的 method 设置
+    assert after["input_json"] == before["input_json"]
+    assert svc.settings().get("method") == "equal_payment"
+
+
 def test_default_history_hides_invalid(svc):
     a = _persist(svc)
     b = _persist(svc)
